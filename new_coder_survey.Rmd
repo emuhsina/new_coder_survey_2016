@@ -1,0 +1,156 @@
+---
+title: "Exploring the New Coder Survey 2016"
+author: "Muhsina Elampilakkattil"
+date: "12 November 2018"
+output: 
+  html_document:
+    toc: true
+    fig_width: 6
+    fig_height: 3
+    code_folding: hide
+---
+<hr/>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Summary
+
+Free Code Camp is an open source community where you learn to code and build projects for nonprofits.Free Code Camp surveyed more than 15,000 people in 2016 who started coding within the past 5 years.
+
+The goal of this survey was to understand these people's motivations in learning to code, how they're learning to code, their demographics, and their socioeconomic background.
+
+<hr/>
+##Load Libraries
+
+```{r, message= FALSE, warning= FALSE}
+library(tidyverse)
+library(RColorBrewer)
+library(ggthemes)
+library(gridExtra)
+library(cowplot)
+
+fillBlue= "#2071a3"
+fillLBlue= "#c3d8e5"
+fillSilver= "#C0C0C0"
+
+survey <- read_csv("Datasets/2016-FCC-New-Coders-Survey-Data.csv")
+
+```
+
+##Who participated?
+Majority of the respondents are 27 years old. The youngest new coder is 10 years old and the oldest one is 86 years.
+```{r, warning= FALSE, fig.width= 10, fig.height= 9}
+#Age distribution
+plot_age<- survey %>%
+  filter(!is.na(Age)) %>%
+  ggplot(aes(x= Age)) +
+  geom_histogram(binwidth= 2, fill= fillBlue) + 
+geom_vline(aes(xintercept = mean(Age)), 
+             linetype = "dashed", size = 0.6,
+             color = "#FC4E07")+
+  labs(title= "Age Distribution", x= "Age", y= "Count", size= 2) + 
+geom_text(aes(x= mean(Age), y= -200, label=round(mean(Age),digits=2)),hjust=-0.2, size=2, color= "red") +
+  theme_minimal(base_size= 8)  
+
+#Gender Distribution
+plot_gender<- survey %>%
+  filter(!is.na(CountryCitizen)) %>%
+  group_by(CountryCitizen) %>%
+  summarize(count = n()) %>%
+  mutate(pct = count/ sum(count) * 100 ) %>%
+  arrange(desc(count)) %>%
+  head(10) %>%
+  ungroup() %>%
+  ggplot(aes(x= reorder(CountryCitizen, count), y= count)) +
+  geom_bar(stat= "identity", fill= fillBlue) +
+  geom_text(aes(label= paste0(round(pct,2),"%", sep="")),
+      position= position_dodge(0), color= "black", size= 2) +
+  labs(title= "Gender Distribution", x= "", y= "Count") +
+  coord_flip() +
+  theme_minimal(base_size= 8)
+
+#How many months have you been programming for?
+plot_exp <- survey %>%
+  filter(!is.na(MonthsProgramming)) %>%
+  ggplot(aes(x= MonthsProgramming))+
+  geom_density(aes(y = ..count..), fill = "lightgray", color= fillBlue, alpha= 0.9) + scale_x_log10() +
+  geom_vline(aes(xintercept = mean(MonthsProgramming)), 
+             linetype = "dashed", size = 0.6,
+             color = "#FC4E07") +
+   labs(title= "Programming experience", x= "Months", y= "Count", size= 2) + 
+  geom_text(aes(x= mean(MonthsProgramming), y= -500, label=round(mean(MonthsProgramming),digits=2)),hjust=-0.2, size=2, color= "red") +
+  theme_minimal(base_size= 8)
+
+#Hours Spend learning each week
+plot_learning<- survey %>%
+  filter(!is.na(HoursLearning)) %>%
+  ggplot(aes(x= HoursLearning))+
+  geom_density(aes(y = ..count..), fill = "lightgray", color= fillBlue, alpha= 0.9) + scale_x_log10() +
+  geom_vline(aes(xintercept = mean(HoursLearning)), 
+             linetype = "dashed", size = 0.6,
+             color = "#FC4E07") +
+   labs(title= "Hours learning per week", x= "hours", y= "Count", size= 2) + 
+  geom_text(aes(x= mean(HoursLearning), y= -1000, label=round(mean(HoursLearning),digits=2)),hjust=-0.2, size=2, color= "red") +
+  theme_minimal(base_size= 8)
+
+#Which country are you a citizen of?
+plot_country<- survey %>%
+  filter(!is.na(CountryCitizen)) %>%
+  group_by(CountryCitizen) %>%
+  summarize(count = n()) %>%
+  mutate(pct = count/ sum(count) * 100 ) %>%
+  arrange(desc(count)) %>%
+  head(10) %>%
+  ungroup() %>%
+  
+  ggplot(aes(x= reorder(CountryCitizen, count), y = count)) + 
+  geom_bar(stat = "identity", fill= fillBlue) + 
+  geom_text(aes(label = paste0(round(pct,2),"%", sep="")),
+      position= position_dodge(0), color= "black", size= 2) + 
+  labs(title= "Country of citizenship", x= "") +
+  coord_flip() + theme_minimal(base_size= 8)
+
+#Which language do you speak at home with your family?
+plot_lang<- survey %>%
+  filter(!is.na(LanguageAtHome)) %>%
+  group_by(LanguageAtHome) %>%
+  summarize(count = n()) %>%
+  mutate(pct = count/ sum(count) * 100 ) %>%
+  arrange(desc(count)) %>%
+  head(10) %>%
+  ggplot(aes(x= reorder(LanguageAtHome, count), y = count)) + 
+  geom_bar(stat = "identity", fill= fillBlue) + 
+  geom_text(aes(label = paste0(round(pct,2),"%", sep="")),
+      position= position_dodge(0), color= "black", size= 2) + 
+  labs(title= "Language at home", x= "") +
+  coord_flip() + theme_minimal(base_size= 8)
+
+first_row<- plot_grid(plot_age, plot_gender, align= 'h', rel_widths= c(1,1.2))
+second_row<- plot_grid(plot_exp, plot_country, align= 'h', rel_widths= c(1,1.2))
+third_row<- plot_grid(plot_learning, plot_lang, align='h',  rel_widths= c(1,1))
+plot_grid(first_row, second_row, third_row, ncol= 1, rel_heights= c(1,1,1))
+
+#Summary
+summary(survey$Age)
+
+```
+
+##Which Job Role are you most Interested in?
+40% of the new coders answered "*Full-stack web developer" to the question.
+```{r}
+#Job roles interested
+survey %>%
+  filter(!is.na(JobRoleInterest)) %>%
+  group_by(JobRoleInterest) %>%
+  summarize(count = n()) %>%
+  mutate(pct = count/ sum(count) * 100 ,
+        DS= ifelse(JobRoleInterest=="Data Scientist / Data Engineer", TRUE, FALSE)) %>%
+  ggplot(aes(x= reorder(JobRoleInterest, count), y = count, fill= DS)) + 
+  geom_bar(stat = "identity") + 
+  scale_fill_manual(values = c(fillSilver, fillBlue)) +
+  geom_text(aes(label = paste0(round(pct, digits= 1),"%", sep="")), position= position_dodge(0), size=4) +
+  labs(title= "Job role interest", x="", y="Count") +
+  coord_flip() + theme_minimal(base_size= 10)+
+  theme(legend.position = "none")
