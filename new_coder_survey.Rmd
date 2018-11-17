@@ -56,14 +56,13 @@ geom_text(aes(x= mean(Age), y= -200, label=round(mean(Age),digits=2)),hjust=-0.2
 
 #Gender Distribution
 plot_gender<- survey %>%
-  filter(!is.na(CountryCitizen)) %>%
-  group_by(CountryCitizen) %>%
+  filter(!is.na(Gender)) %>%
+  group_by(Gender) %>%
   summarize(count = n()) %>%
   mutate(pct = count/ sum(count) * 100 ) %>%
   arrange(desc(count)) %>%
-  head(10) %>%
   ungroup() %>%
-  ggplot(aes(x= reorder(CountryCitizen, count), y= count)) +
+  ggplot(aes(x= reorder(Gender, count), y= count)) +
   geom_bar(stat= "identity", fill= fillBlue) +
   geom_text(aes(label= paste0(round(pct,2),"%", sep="")),
       position= position_dodge(0), color= "black", size= 2) +
@@ -127,7 +126,7 @@ plot_lang<- survey %>%
   labs(title= "Language at home", x= "") +
   coord_flip() + theme_minimal(base_size= 8)
 
-first_row<- plot_grid(plot_age, plot_gender, align= 'h', rel_widths= c(1,1.2))
+first_row<- plot_grid(plot_age, plot_gender, align= 'h', rel_widths= c(1,1))
 second_row<- plot_grid(plot_exp, plot_country, align= 'h', rel_widths= c(1,1.2))
 third_row<- plot_grid(plot_learning, plot_lang, align='h',  rel_widths= c(1,1))
 plot_grid(first_row, second_row, third_row, ncol= 1, rel_heights= c(1,1,1))
@@ -150,7 +149,367 @@ survey %>%
   ggplot(aes(x= reorder(JobRoleInterest, count), y = count, fill= DS)) + 
   geom_bar(stat = "identity") + 
   scale_fill_manual(values = c(fillSilver, fillBlue)) +
-  geom_text(aes(label = paste0(round(pct, digits= 1),"%", sep="")), position= position_dodge(0), size=4) +
+  geom_text(aes(label = paste0(round(pct, digits= 1),"%", sep="")), position= position_dodge(0),hjust= 0, size=2) +
   labs(title= "Job role interest", x="", y="Count") +
-  coord_flip() + theme_minimal(base_size= 10)+
+  coord_flip() + 
+  ylim(c(0,3000)) +
+  theme_minimal(base_size= 8)+
   theme(legend.position = "none")
+```
+
+
+## Data Science/ Data Engineers
+Lets dive deeper into the details of developing Data scientists or Data engineers.
+
+```{r, fig.width= 10}
+#Subsetting the data
+DS<- filter(survey, JobRoleInterest == "Data Scientist / Data Engineer")
+
+#Age distribution
+DS_age<- DS %>%
+  filter(!is.na(Age)) %>%
+  ggplot(aes(x= Age)) +
+  geom_histogram(binwidth= 0.02, fill= fillBlue) + 
+  labs(title= "Age Distribution", x= "Age", y= "Count", size= 2) + 
+  scale_x_log10() +
+  theme_minimal(base_size= 8) 
+
+#Gender Distribution
+DS_gender<- DS %>%
+  filter(!is.na(Gender)) %>%
+  group_by(Gender) %>%
+  summarize(count = n()) %>%
+  mutate(pct = count/ sum(count) * 100 ) %>%
+  arrange(desc(count)) %>%
+  ungroup() %>%
+  ggplot(aes(x= reorder(Gender, count), y= count, fill= count)) +
+  geom_bar(stat= "identity") +
+  geom_text(aes(label= paste0(round(pct,1),"%", sep="")),
+      position= position_dodge(0), hjust= 1.5, color= "white", size= 3) +
+  labs(title= "What is your gender?", x= "", y= "Count") +
+  scale_fill_gradient(low= fillLBlue, high= fillBlue) +
+  coord_flip() +
+  theme_minimal(base_size= 8) +
+    theme(legend.position = "none")
+
+plot_grid(DS_gender, DS_age, align="h", rel_widths = c(1,1.2))
+```
+
+## Programming experience and learning style
+
+```{r, fig.width= 10, warning= FALSE}
+#How many months have you been programming for?
+DS_exp <- DS %>%
+  filter(!is.na(MonthsProgramming)) %>%
+  ggplot(aes(x= MonthsProgramming))+
+  geom_histogram(binwidth= 0.9, fill = fillBlue) +
+  labs(title= "Programming experience", x= "Months", y= "Count", size= 2) + 
+  scale_x_continuous(breaks= c(1, 8, 60, 360), labels= c("1", "8", "60", "360"), trans= "log2") +
+  theme_minimal(base_size= 8)
+
+#Hours Spend learning each week
+DS_learning<- survey %>%
+  filter(!is.na(HoursLearning)) %>%
+  ggplot(aes(x= HoursLearning))+
+  geom_histogram(binwidth= 0.5, fill = fillBlue) +
+  labs(title= "Hours learning per week", x= "hours", y= "Count", size= 2) + 
+  scale_x_continuous(breaks= c(5,10,20,40,80),labels= c("5","10","20","40","80"), trans="log2") +
+  theme_minimal(base_size= 8)
+
+plot_grid(DS_exp, DS_learning, align= "h")
+```
+
+### Job Preference
+
+```{r}
+#Job Preference
+DS %>%
+  group_by(JobPref) %>%
+  filter(!is.na(JobPref)) %>%
+  summarize(count = n()) %>%
+  rbind(data.frame("JobPref"= c("start your own business", "freelance"), count= c(0,0))) %>%
+  mutate(pct = count/ sum(count) * 100 ) %>%
+  ggplot(aes(x= reorder(JobPref, count), y = count, fill= count)) + 
+  geom_bar(stat = "identity") + 
+  scale_x_discrete(drop=FALSE) +
+  labs(title="Job preference", x="", y= "Count") +
+  geom_text(aes(label = paste0(round(pct, digits= 2),"%")), hjust= 1, color= "white", size= 3) + 
+  coord_flip() +
+  scale_fill_gradient(low= fillLBlue, high=fillBlue) +
+  theme_minimal(base_size= 8) +
+  theme(legend.position= "none")
+
+#where would you prefer to work?
+DS %>%
+  filter(!is.na(JobWherePref)) %>%
+  group_by(JobWherePref) %>%
+  summarize(count = n()) %>%
+  mutate(pct = count/ sum(count) * 100 ) %>%
+  ggplot(aes(x= reorder(JobWherePref, count), y = count, fill= count)) + 
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = paste0(round(pct, 1),"%")), color="white", hjust=1, size= 2.5) + 
+  labs(title= "Where would you prefere to work?", x="", y="Count")+
+  scale_fill_gradient(low=fillLBlue, high= fillBlue) +
+  coord_flip()+
+  theme_minimal(base_size= 8) +
+  theme(legend.position= "none")
+
+#JobApplyWhen
+DS %>%
+  filter(!is.na(JobApplyWhen)) %>%
+  group_by(JobApplyWhen) %>%
+  summarize(count = n()) %>%
+  mutate(pct = count/ sum(count) * 100 ) %>%
+  ggplot(aes(x= reorder(JobApplyWhen, count), y = count, fill= count)) + 
+  geom_bar(stat = "identity") + 
+  labs(title= "Applying for Jobs?", x="",y="Count") +
+  geom_text(aes(label = paste0(round(pct, 1),"%")), size= 2.5, color= "white", hjust= 1 ) + 
+  scale_fill_gradient(low= fillLBlue, high=fillBlue) +
+  coord_flip()+
+  theme_minimal(base_size=8) +
+  theme(legend.position="none")
+
+#Relocate
+DS %>%
+  filter(!is.na(JobRelocateYesNo)) %>%
+  group_by(JobRelocateYesNo) %>%
+  summarize(count = n()) %>%
+  mutate(pct = count/ sum(count) * 100 ) %>%
+  ggplot(aes(x= reorder(JobRelocateYesNo, count), y = count, fill= count)) + 
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = paste0(round(pct, 1),"%")), color="white", hjust=1, size= 2.5) + 
+  labs(title= "Willingness to relocate?", x="", y="Count")+
+  scale_x_discrete(labels= c("No","Yes"))+
+  scale_fill_gradient(low=fillLBlue, high= fillBlue) +
+  coord_flip()+
+  theme_minimal(base_size= 8) +
+  theme(legend.position= "none")
+
+```
+
+## Coding events attended
+
+```{r}
+#Code events 
+DS_events<- DS%>%
+  select(matches("CodeEvent")) %>%
+  gather(events, attended, na.rm=TRUE) %>%
+  group_by(events) %>%
+  summarize(count= n()) %>%
+  arrange(desc(count))
+
+DS_events$events<- str_replace(DS_events$events, "CodeEvent", "")
+
+#Code events attended
+DS_events %>%
+mutate(pct= count/ sum(count) *100) %>%
+filter(pct> 0.5) %>%
+ggplot(aes(x= reorder(events, count), y= count)) + 
+geom_bar(stat= "identity", fill= fillBlue)+
+geom_text(aes(label= paste0(round(pct,1),"%")), color= "black", hjust=0, size= 2.3) +
+labs(title= "Coding event attended", x= "", y= "Count")+
+ylim(c(0, 400)) +
+coord_flip() +
+theme_minimal(base_size=8) +
+theme(legend.position= "none")
+```
+
+
+#Which learning resource do you find usefull
+
+```{r}
+#Resources
+DS_resource<- DS%>%
+  select(matches("Resource")) %>%
+  gather(resource, Used, na.rm=TRUE) %>%
+  group_by(resource) %>%
+  summarize(count= n()) %>%
+  arrange(desc(count))
+
+DS_resource$resource<- str_replace(DS_resource$resource, "Resource", "")
+
+#Plot the use of resources
+DS_resource %>%
+mutate(pct= count/ sum(count) *100) %>%
+filter(pct> 0.5) %>%
+ggplot(aes(x= reorder(resource, count), y= count)) + 
+geom_bar(stat= "identity", fill= fillBlue)+
+geom_text(aes(label= paste0(round(pct,1),"%")), color= "black", hjust=0, size= 2.3) +
+labs(title= "Learning Resources", x= "", y= "Count")+
+ylim(c(0, 500)) +
+coord_flip() +
+theme_minimal(base_size=8) +
+theme(legend.position= "none")
+
+```
+
+## Listening to podcasts
+
+```{r}
+
+#Podcasts
+DS_podcast<- DS%>%
+  select(matches("Podcast")) %>%
+  gather(podcast, Used, na.rm=TRUE) %>%
+  group_by(podcast) %>%
+  summarize(count= n()) %>%
+  arrange(desc(count))
+
+DS_podcast$podcast<- str_replace(DS_podcast$podcast, "Podcast", "")
+
+#Plot
+DS_podcast %>%
+mutate(pct= count/ sum(count) *100) %>%
+ggplot(aes(x= reorder(podcast, count), y= count)) + 
+geom_bar(stat= "identity", fill= fillBlue)+
+geom_text(aes(label= paste0(round(pct,1),"%")), color= "black", hjust=-0.1, size= 2.3) +
+labs(title= "Listening to podcasts", x= "", y= "Count")+
+ylim(c(0, 600)) +
+coord_flip() +
+theme_minimal(base_size=8) +
+theme(legend.position= "none")
+```
+
+#Demographics
+
+```{r}
+#Which country
+DS %>%
+  filter(!is.na(CountryCitizen)) %>%
+  group_by(CountryCitizen) %>%
+  summarize(count = n()) %>%
+  mutate(pct = count/ sum(count) * 100 ) %>%
+  arrange(desc(count)) %>%
+  head(10) %>%
+  ungroup() %>%
+  
+  ggplot(aes(x= reorder(CountryCitizen, count), y = count)) + 
+  geom_bar(stat = "identity", fill= fillBlue) + 
+  geom_text(aes(label = paste0(round(pct,1),"%", sep="")),
+      position= position_dodge(0), color= "black", size= 2, hjust=-0.1) + 
+  ylim(0,300) +
+  labs(title= "Country of citizenship", x= "") +
+  coord_flip() + theme_minimal(base_size= 8)
+
+#Which language do you speak at home with your family?
+DS %>%
+  filter(!is.na(LanguageAtHome)) %>%
+  group_by(LanguageAtHome) %>%
+  summarize(count = n()) %>%
+  mutate(pct = count/ sum(count) * 100 ) %>%
+  arrange(desc(count)) %>%
+  head(10) %>%
+  ggplot(aes(x= reorder(LanguageAtHome, count), y = count)) + 
+  geom_bar(stat = "identity", fill= fillBlue) + 
+  geom_text(aes(label = paste0(round(pct,1),"%", sep="")),
+      position= position_dodge(0), color= "black", size= 2, hjust= -0.1) + 
+  ylim(0, 350) +
+  labs(title= "Language at home", x= "") +
+  coord_flip() + theme_minimal(base_size= 8)
+```
+
+##Educational background
+
+```{r}
+#School degree
+DS %>%
+  filter(!is.na(SchoolDegree)) %>%
+  group_by(SchoolDegree) %>%
+  summarize(count = n()) %>%
+  mutate(pct = count/ sum(count) * 100 ) %>%
+  arrange(desc(count)) %>%
+  ggplot(aes(x= reorder(SchoolDegree, count), y = count)) + 
+  geom_bar(stat = "identity", fill= fillBlue) + 
+  geom_text(aes(label = paste0(round(pct, digits= 2), "%")), hjust= -0.1, size=2) +
+  labs(title="School Degree", x="", y= "Count")+
+  ylim(c(0,250)) +
+  theme_minimal(base_size=8)+
+  coord_flip()
+
+#School major
+DS %>%
+  filter(!is.na(SchoolMajor)) %>%
+  group_by(SchoolMajor) %>%
+  summarize(count = n()) %>%
+  mutate(pct = count/ sum(count) * 100 ) %>%
+  arrange(desc(count)) %>%
+  head(15) %>%
+  ggplot(aes(x= reorder(SchoolMajor, count), y = count)) + 
+  geom_bar(stat = "identity", fill= fillBlue) + 
+geom_text(aes(label = paste0(round(pct, 1),"%")), color= "white", size= 2, hjust= 1) + 
+labs(title="School Major", x="", y= "Count")+
+coord_flip()+
+  theme_minimal(base_size=8)
+
+```
+
+#Employment Status
+
+```{r}
+
+#Changing the null value in the Employment Status variable to "Other" if the respondend provided the other option
+emp_status<- within(DS, EmploymentStatus[is.na(EmploymentStatus) & !is.na(EmploymentStatusOther)] <- 'Other')
+
+#Plot
+emp_status%>%
+ filter(!is.na(EmploymentStatus)) %>%
+  group_by(EmploymentStatus) %>%
+  summarize(count = n()) %>%
+  mutate(pct = count/ sum(count) * 100 ) %>%
+  arrange(desc(count)) %>%
+  head(15) %>%
+  ggplot(aes(x= reorder(EmploymentStatus, count), y = count)) + 
+  geom_bar(stat = "identity", fill= fillBlue) + 
+geom_text(aes(label = paste0(round(pct, 1),"%")), color= "white", size= 2, hjust= 1) + 
+labs(title="Employment Status", x="", y= "Count")+
+coord_flip()+
+  theme_minimal(base_size=8)
+  
+#Changing the null value in the Employment Field variable to "Other" if the respondend provided the other option
+emp_field<- within(DS, EmploymentField[is.na(EmploymentField) & !is.na(EmploymentFieldOther)] <- 'Other')
+
+#Plot
+emp_field%>%
+ filter(!is.na(EmploymentField)) %>%
+  group_by(EmploymentField) %>%
+  summarize(count = n()) %>%
+  mutate(pct = count/ sum(count) * 100 ) %>%
+  arrange(desc(count)) %>%
+  head(15) %>%
+  ggplot(aes(x= reorder(EmploymentField, count), y = count)) + 
+  geom_bar(stat = "identity", fill= fillBlue) + 
+geom_text(aes(label = paste0(round(pct, 1),"%")), color= "white", size= 2, hjust= 1) + 
+labs(title="Employment Field", x="", y= "Count")+
+coord_flip()+
+  theme_minimal(base_size=8)
+  
+#Salary
+DS %>%
+  filter(!is.na(Income)) %>%
+  ggplot(aes(x= Income)) + 
+  geom_histogram(binwidth = 10000, fill= fillBlue)+
+  labs(title= "Current Salary", x= "Income", "Count")+
+  theme_minimal(base_size=8)
+```
+
+
+# Age and Income
+
+```{r}
+#Correlation
+r_gender<- DS%>%
+  group_by(Gender) %>%
+  filter(Gender %in% c("male","female")) %>%
+  summarize(r= cor(Age, Income, use="pairwise.complete.obs"))
+
+#Relations between Age and income
+DS %>%
+  filter(!is.na(Gender),
+        Gender %in% c("female", "male")) %>%
+  ggplot(aes(x= Age, y= Income, col = Gender)) + 
+  geom_point(alpha= 0.3) +
+  facet_wrap(~Gender)+
+  geom_smooth(method= 'lm', se=FALSE)+
+  geom_text(data= r_gender, mapping= aes(x= -Inf, y= -Inf, label= paste0("r= ", round(r,2))), hjust= -0.1, vjust= -20, color= "black") +
+  theme_minimal(base_size=8)
+```
