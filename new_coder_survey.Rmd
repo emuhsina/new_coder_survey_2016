@@ -17,12 +17,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #Summary
 
-Free Code Camp is an open source community where you learn to code and build projects for nonprofits.Free Code Camp surveyed more than 15,000 people in 2016 who started coding within the past 5 years.
+Free Code Camp is an open source community where you learn to code and build projects for nonprofits.[Free Code Camp](www.freecodecamp.org) and [Code Newbie](www.codenewbie.org) surveyed more than 15,000 people in 2016 who started coding within the past 5 years.
 
 The goal of this survey was to understand these people's motivations in learning to code, how they're learning to code, their demographics, and their socioeconomic background.
 
 <hr/>
-##Load Libraries
+#Load Libraries
 
 ```{r, message= FALSE, warning= FALSE}
 library(tidyverse)
@@ -35,23 +35,30 @@ fillBlue= "#2071a3"
 fillLBlue= "#c3d8e5"
 fillSilver= "#C0C0C0"
 
-survey <- read_csv("Datasets/2016-FCC-New-Coders-Survey-Data.csv")
+df <- read_csv("Datasets/2016-FCC-New-Coders-Survey-Data.csv")
+
+#Removing the respondents having more than 5 years of coding experience.
+survey<- filter(df, MonthsProgramming <= 60)
 
 ```
 
-##Who participated?
-Majority of the respondents are 27 years old. The youngest new coder is 10 years old and the oldest one is 86 years.
+#Who participated?
+More than 15000 participated in the survey. Over 1000 participants are having more than **5 years** of programming experience. As I want to analyze the new coders I have filtered out these responses having more than 5 years of experience, considering there are experienced in the field.
+
+* Their average age is **29 years**
+* **22%** participants are women
+* They have been coding for an average of **13 months**
+* **56%** of the respondents live outside the US
+* They spend an average of **16 hours** learning each week
+* **45%** of them are not native English speakers
+
 ```{r, warning= FALSE, fig.width= 10, fig.height= 9}
 #Age distribution
 plot_age<- survey %>%
   filter(!is.na(Age)) %>%
   ggplot(aes(x= Age)) +
   geom_histogram(binwidth= 2, fill= fillBlue) + 
-geom_vline(aes(xintercept = mean(Age)), 
-             linetype = "dashed", size = 0.6,
-             color = "#FC4E07")+
   labs(title= "Age Distribution", x= "Age", y= "Count", size= 2) + 
-geom_text(aes(x= mean(Age), y= -200, label=round(mean(Age),digits=2)),hjust=-0.2, size=2, color= "red") +
   theme_minimal(base_size= 8)  
 
 #Gender Distribution
@@ -75,11 +82,7 @@ plot_exp <- survey %>%
   filter(!is.na(MonthsProgramming)) %>%
   ggplot(aes(x= MonthsProgramming))+
   geom_density(aes(y = ..count..), fill = "lightgray", color= fillBlue, alpha= 0.9) + scale_x_log10() +
-  geom_vline(aes(xintercept = mean(MonthsProgramming)), 
-             linetype = "dashed", size = 0.6,
-             color = "#FC4E07") +
    labs(title= "Programming experience", x= "Months", y= "Count", size= 2) + 
-  geom_text(aes(x= mean(MonthsProgramming), y= -500, label=round(mean(MonthsProgramming),digits=2)),hjust=-0.2, size=2, color= "red") +
   theme_minimal(base_size= 8)
 
 #Hours Spend learning each week
@@ -87,11 +90,7 @@ plot_learning<- survey %>%
   filter(!is.na(HoursLearning)) %>%
   ggplot(aes(x= HoursLearning))+
   geom_density(aes(y = ..count..), fill = "lightgray", color= fillBlue, alpha= 0.9) + scale_x_log10() +
-  geom_vline(aes(xintercept = mean(HoursLearning)), 
-             linetype = "dashed", size = 0.6,
-             color = "#FC4E07") +
    labs(title= "Hours learning per week", x= "hours", y= "Count", size= 2) + 
-  geom_text(aes(x= mean(HoursLearning), y= -1000, label=round(mean(HoursLearning),digits=2)),hjust=-0.2, size=2, color= "red") +
   theme_minimal(base_size= 8)
 
 #Which country are you a citizen of?
@@ -131,13 +130,12 @@ second_row<- plot_grid(plot_exp, plot_country, align= 'h', rel_widths= c(1,1.2))
 third_row<- plot_grid(plot_learning, plot_lang, align='h',  rel_widths= c(1,1))
 plot_grid(first_row, second_row, third_row, ncol= 1, rel_heights= c(1,1,1))
 
-#Summary
-summary(survey$Age)
 
 ```
 
-##Which Job Role are you most Interested in?
-40% of the new coders answered "*Full-stack web developer" to the question.
+# Which Job Role are you most Interested in?
+Majority  of them want to become web developers. Only *quarter* of the respondents opted other than web developer. 
+
 ```{r}
 #Job roles interested
 survey %>%
@@ -157,9 +155,12 @@ survey %>%
   theme(legend.position = "none")
 ```
 
-
-## Data Science/ Data Engineers
+# Data Science/ Data Engineers
 Lets dive deeper into the details of developing Data scientists or Data engineers.
+
+* 592 of the new coders would like to become *Data Scientists/ Data Engineers*
+* **Quarter** of them are women. 
+* Their average age is **28 years**
 
 ```{r, fig.width= 10}
 #Subsetting the data
@@ -196,13 +197,16 @@ plot_grid(DS_gender, DS_age, align="h", rel_widths = c(1,1.2))
 ```
 
 ## Programming experience and learning style
+581 out of 592 developing Data Scientists/ Engineers responded to the question *how many hours do you spend learning each week?*
 
+* They have been coding for an average of **1 year**
+* On an average they spend **14 hours** per week for learning 
 ```{r, fig.width= 10, warning= FALSE}
 #How many months have you been programming for?
 DS_exp <- DS %>%
   filter(!is.na(MonthsProgramming)) %>%
   ggplot(aes(x= MonthsProgramming))+
-  geom_histogram(binwidth= 0.9, fill = fillBlue) +
+  geom_histogram(binwidth= 0.4, fill = fillBlue) +
   labs(title= "Programming experience", x= "Months", y= "Count", size= 2) + 
   scale_x_continuous(breaks= c(1, 8, 60, 360), labels= c("1", "8", "60", "360"), trans= "log2") +
   theme_minimal(base_size= 8)
@@ -219,11 +223,18 @@ DS_learning<- survey %>%
 plot_grid(DS_exp, DS_learning, align= "h")
 ```
 
-### Job Preference
+##Job Preference
 
-```{r}
+* Majority of them would like to work for a medium sized company
+* None of them want to start their on business or do freelance job
+* More than half of them would like to work in an office with other developers
+* Only **19%** prefer to work remotely. 
+* **53%** of them are already applying for jobs or will apply within the next 1 year
+* Majority of them are willing to relocate for job
+
+```{r, fig.width=10, fig.height=5}
 #Job Preference
-DS %>%
+p1 <- DS %>%
   group_by(JobPref) %>%
   filter(!is.na(JobPref)) %>%
   summarize(count = n()) %>%
@@ -240,13 +251,13 @@ DS %>%
   theme(legend.position= "none")
 
 #where would you prefer to work?
-DS %>%
+p2<- DS %>%
   filter(!is.na(JobWherePref)) %>%
   group_by(JobWherePref) %>%
   summarize(count = n()) %>%
   mutate(pct = count/ sum(count) * 100 ) %>%
   ggplot(aes(x= reorder(JobWherePref, count), y = count, fill= count)) + 
-  geom_bar(stat = "identity") + 
+  geom_bar(stat = "identity", width= 0.5) + 
   geom_text(aes(label = paste0(round(pct, 1),"%")), color="white", hjust=1, size= 2.5) + 
   labs(title= "Where would you prefere to work?", x="", y="Count")+
   scale_fill_gradient(low=fillLBlue, high= fillBlue) +
@@ -255,7 +266,7 @@ DS %>%
   theme(legend.position= "none")
 
 #JobApplyWhen
-DS %>%
+p3<- DS %>%
   filter(!is.na(JobApplyWhen)) %>%
   group_by(JobApplyWhen) %>%
   summarize(count = n()) %>%
@@ -270,13 +281,13 @@ DS %>%
   theme(legend.position="none")
 
 #Relocate
-DS %>%
+p4<- DS %>%
   filter(!is.na(JobRelocateYesNo)) %>%
   group_by(JobRelocateYesNo) %>%
   summarize(count = n()) %>%
   mutate(pct = count/ sum(count) * 100 ) %>%
   ggplot(aes(x= reorder(JobRelocateYesNo, count), y = count, fill= count)) + 
-  geom_bar(stat = "identity") + 
+  geom_bar(stat = "identity", width= 0.5) + 
   geom_text(aes(label = paste0(round(pct, 1),"%")), color="white", hjust=1, size= 2.5) + 
   labs(title= "Willingness to relocate?", x="", y="Count")+
   scale_x_discrete(labels= c("No","Yes"))+
@@ -285,9 +296,15 @@ DS %>%
   theme_minimal(base_size= 8) +
   theme(legend.position= "none")
 
+r1<- plot_grid(p1, p3, align="h")
+r2<- plot_grid(p2, p4, align="h")
+plot_grid(r1, r2, ncol= 1, rel_heights = c(1.2,1))
 ```
 
 ## Coding events attended
+
+Most of them have not attended any coding events yet.
+
 
 ```{r}
 #Code events 
@@ -314,8 +331,9 @@ theme_minimal(base_size=8) +
 theme(legend.position= "none")
 ```
 
+##Which learning resource do you find usefull
 
-#Which learning resource do you find usefull
+Half of them are using any of free code camp, codecademy or coursera as learning resource. 
 
 ```{r}
 #Resources
@@ -345,6 +363,8 @@ theme(legend.position= "none")
 
 ## Listening to podcasts
 
+Only **23%** of the developing data scientists listen to coding related podcasts.
+
 ```{r}
 
 #Podcasts
@@ -370,11 +390,14 @@ theme_minimal(base_size=8) +
 theme(legend.position= "none")
 ```
 
-#Demographics
+## Demographics
 
-```{r}
+* **53%** of them are outside the US
+* Nearly half of them are not native English speakers
+
+```{r, fig.width= 10}
 #Which country
-DS %>%
+p1<- DS %>%
   filter(!is.na(CountryCitizen)) %>%
   group_by(CountryCitizen) %>%
   summarize(count = n()) %>%
@@ -392,7 +415,7 @@ DS %>%
   coord_flip() + theme_minimal(base_size= 8)
 
 #Which language do you speak at home with your family?
-DS %>%
+p2<- DS %>%
   filter(!is.na(LanguageAtHome)) %>%
   group_by(LanguageAtHome) %>%
   summarize(count = n()) %>%
@@ -406,9 +429,14 @@ DS %>%
   ylim(0, 350) +
   labs(title= "Language at home", x= "") +
   coord_flip() + theme_minimal(base_size= 8)
+plot_grid(p1,p2,align= "h", rel_widths = c(1.2,1))
+
 ```
 
 ##Educational background
+
+* **69%** of the developing data scientists have earned atleast a bachelor's degree
+* Computer science is the most popular school major
 
 ```{r}
 #School degree
@@ -443,15 +471,19 @@ coord_flip()+
 
 ```
 
-#Employment Status
+## Employment Status
 
-```{r}
+* Nearly half of them are currently employed
+* Around quarter of them are working in software development and IT
+* Their average salary is around 48k
+
+```{r, fig.width= 10}
 
 #Changing the null value in the Employment Status variable to "Other" if the respondend provided the other option
 emp_status<- within(DS, EmploymentStatus[is.na(EmploymentStatus) & !is.na(EmploymentStatusOther)] <- 'Other')
 
 #Plot
-emp_status%>%
+p1<- emp_status%>%
  filter(!is.na(EmploymentStatus)) %>%
   group_by(EmploymentStatus) %>%
   summarize(count = n()) %>%
@@ -469,7 +501,7 @@ coord_flip()+
 emp_field<- within(DS, EmploymentField[is.na(EmploymentField) & !is.na(EmploymentFieldOther)] <- 'Other')
 
 #Plot
-emp_field%>%
+p2<- emp_field%>%
  filter(!is.na(EmploymentField)) %>%
   group_by(EmploymentField) %>%
   summarize(count = n()) %>%
@@ -482,34 +514,23 @@ geom_text(aes(label = paste0(round(pct, 1),"%")), color= "white", size= 2, hjust
 labs(title="Employment Field", x="", y= "Count")+
 coord_flip()+
   theme_minimal(base_size=8)
-  
+
+plot_grid(p1,p2, align= "h")
+```
+
+```{r, fig.width= 5}  
 #Salary
 DS %>%
   filter(!is.na(Income)) %>%
   ggplot(aes(x= Income)) + 
-  geom_histogram(binwidth = 10000, fill= fillBlue)+
+  geom_histogram(binwidth= 10000, alpha= 0.9, fill= fillBlue) + 
   labs(title= "Current Salary", x= "Income", "Count")+
   theme_minimal(base_size=8)
+
+
+summary(DS$Income)
+
 ```
 
 
-# Age and Income
 
-```{r}
-#Correlation
-r_gender<- DS%>%
-  group_by(Gender) %>%
-  filter(Gender %in% c("male","female")) %>%
-  summarize(r= cor(Age, Income, use="pairwise.complete.obs"))
-
-#Relations between Age and income
-DS %>%
-  filter(!is.na(Gender),
-        Gender %in% c("female", "male")) %>%
-  ggplot(aes(x= Age, y= Income, col = Gender)) + 
-  geom_point(alpha= 0.3) +
-  facet_wrap(~Gender)+
-  geom_smooth(method= 'lm', se=FALSE)+
-  geom_text(data= r_gender, mapping= aes(x= -Inf, y= -Inf, label= paste0("r= ", round(r,2))), hjust= -0.1, vjust= -20, color= "black") +
-  theme_minimal(base_size=8)
-```
